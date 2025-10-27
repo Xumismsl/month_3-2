@@ -1,7 +1,6 @@
 import flet as ft
 from db import main_db
 
-
 def main(page: ft.Page):
     page.title = 'ToDo list'
     page.theme_mode = ft.ThemeMode.LIGHT
@@ -9,13 +8,11 @@ def main(page: ft.Page):
     task_list = ft.Column(spacing=10)
     filter_type = 'all'
 
- 
     def load_task():
         task_list.controls.clear()
         for task_id, task_text, completed, task_time in main_db.get_tasks(filter_type):
             task_list.controls.append(create_task_row(task_id, task_text, completed, task_time))
         page.update()
-
 
     def create_task_row(task_id, task_text, completed, task_time):
         task_field = ft.TextField(value=task_text, read_only=True, expand=True)
@@ -48,21 +45,26 @@ def main(page: ft.Page):
 
         return ft.Row([checkbox, task_time_label, task_field, edit_button, save_button, delete_button])
 
-
     def add_task(_):
-        if task_input.value:
-            if len(task_input.value) > 200:
-                task_input.value = task_input.value[:200]
-                task_input.value = "Слишком длинная задача! Максимум 200 символов."
-                task_input.update()
-                return
-            
-            
-            task = task_input.value
-            task_id = main_db.add_task(task)
-            task_list.controls.append(create_task_row(task_id, task, 0, None))
-            task_input.value = ''
-            page.update()
+        text = task_input.value
+        if not text:
+            return
+
+        if len(text) > 200:
+            warning_label.value = "Слишком длинная задача! Максимум 200 символов."
+            warning_label.visible = True
+            warning_label.update()
+            return
+
+        warning_label.visible = False
+        warning_label.update()
+
+        task_id = main_db.add_task(text)
+        task_list.controls.append(create_task_row(task_id, text, 0, None))
+        task_input.value = ''
+        task_input.update()
+        page.update()
+
 
     def set_filter(filter_value):
         nonlocal filter_type
@@ -77,7 +79,6 @@ def main(page: ft.Page):
 
     task_input = ft.TextField(label='Введите новую задачу', expand=True, on_submit=add_task)
     add_button = ft.IconButton(icon=ft.Icons.ADD, tooltip='Добавить задачу', on_click=add_task)
-
     delete_all_button = ft.IconButton(
         icon=ft.Icons.DELETE_SWEEP,
         tooltip="Удалить все задачи",
@@ -85,8 +86,13 @@ def main(page: ft.Page):
         icon_color=ft.Colors.RED_ACCENT
     )
 
+    warning_label = ft.Text(value="", color=ft.Colors.RED, visible=False)
+
     page.add(
-        ft.Row([task_input, add_button, delete_all_button]),
+        ft.Column([
+            ft.Row([task_input, add_button, delete_all_button]),
+            warning_label
+        ]),
         filter_buttons,
         task_list
     )
