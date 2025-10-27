@@ -52,9 +52,11 @@ def main(page: ft.Page):
     def add_task(_):
         if task_input.value:
             if len(task_input.value) > 200:
-                task_input.value = 'Превышен лимит в 200 символов!'
+                task_input.value = task_input.value[:200]
+                task_input.value = "Слишком длинная задача! Максимум 200 символов."
                 task_input.update()
                 return
+            
             
             task = task_input.value
             task_id = main_db.add_task(task)
